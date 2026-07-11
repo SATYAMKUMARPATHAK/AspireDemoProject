@@ -1,0 +1,133 @@
+@page "/cart"
+@rendermode InteractiveServer
+@inject CartService CartService
+@inject NavigationManager Nav
+
+<PageTitle>Shopping Cart | AspireStore</PageTitle>
+
+<div class="container py-8 animate-fade-in">
+    <div class="flex items-center gap-4 mb-8">
+        <h2 class="brand-font m-0 text-3xl">Your Cart</h2>
+        @if (CartService.Count > 0)
+        {
+            <span class="badge badge-primary">@CartService.Count Items</span>
+        }
+    </div>
+
+    @if (CartService.Count == 0)
+    {
+        <div class="glass-panel text-center py-16">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-4" style="margin: 0 auto;">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <h3 class="text-2xl font-bold mb-4">Your cart is empty</h3>
+            <p class="text-muted mb-8">Looks like you haven't added anything yet.</p>
+            <a href="/products" class="btn btn-primary">Start Shopping</a>
+        </div>
+    }
+    else
+    {
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="md:col-span-2 flex flex-col gap-4">
+                @foreach (var item in CartService.Items)
+                {
+                    <div class="glass-panel p-4 flex flex-col sm:flex-row gap-4 items-center transition-all hover:border-indigo-500/30">
+                        <div class="w-full sm:w-24 h-24 bg-zinc-900 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: var(--bg-base);">
+                            <img src="@item.ImageUrl" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/80x80/e4e4e7/18181b?text=IMG';" />
+                        </div>
+                        
+                        <div class="flex-1 text-center sm:text-left">
+                            <h4 class="font-bold text-lg mb-1">@item.ProductName</h4>
+                            <div class="text-muted font-medium">@item.UnitPrice.ToString("C") each</div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 w-full sm:w-auto justify-center sm:justify-end mt-4 sm:mt-0">
+                            <div class="flex items-center">
+                                <input type="number" class="form-control text-center font-bold" style="width: 70px; margin-bottom: 0; padding: 0.5rem;" min="1" value="@item.Quantity" @onchange="@(e => UpdateQuantity(item.ProductId, e.Value))" />
+                            </div>
+                            
+                            <div class="font-bold text-lg w-24 text-right text-gradient">
+                                @((item.UnitPrice * item.Quantity).ToString("C"))
+                            </div>
+                            
+                            <button class="btn btn-danger" style="padding: 0.5rem;" @onclick="() => Remove(item.ProductId)" title="Remove item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+                }
+                
+                <div class="flex justify-end mt-4">
+                    <button class="btn btn-secondary" @onclick="ClearCart">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Clear Cart
+                    </button>
+                </div>
+            </div>
+            
+            <div>
+                <div class="glass-panel p-6 sticky top-24">
+                    <h3 class="brand-font text-2xl mb-6 pb-4" style="border-bottom: 1px solid var(--border-color);">Order Summary</h3>
+                    
+                    <div class="flex justify-between mb-4 text-muted">
+                        <span>Subtotal (@CartService.Count items)</span>
+                        <span class="text-primary font-medium">@CartService.Total.ToString("C")</span>
+                    </div>
+                    
+                    <div class="flex justify-between mb-6 text-muted">
+                        <span>Shipping</span>
+                        <span class="text-success font-medium">Free</span>
+                    </div>
+                    
+                    <div class="flex justify-between pt-4 mb-8" style="border-top: 1px solid var(--border-color);">
+                        <span class="text-xl font-bold">Total</span>
+                        <span class="text-2xl font-bold text-gradient">@CartService.Total.ToString("C")</span>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1.1rem;" @onclick="Checkout">
+                        Proceed to Checkout
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="/products" class="text-sm text-muted hover:text-white inline-flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        CartService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        CartService.OnChange -= StateHasChanged;
+    }
+
+    private void UpdateQuantity(Guid id, object? value)
+    {
+        if (value != null && int.TryParse(value.ToString(), out int q))
+        {
+            CartService.UpdateQuantity(id, q);
+        }
+    }
+
+    private void Remove(Guid id) => CartService.RemoveItem(id);
+    
+    private void ClearCart() => CartService.Clear();
+
+    private void Checkout()
+    {
+        Nav.NavigateTo("/checkout");
+    }
+}

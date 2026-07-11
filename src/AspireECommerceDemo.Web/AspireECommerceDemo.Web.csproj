@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AspireECommerceDemo.ServiceDefaults\AspireECommerceDemo.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\AspireECommerceDemo.Contracts\AspireECommerceDemo.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

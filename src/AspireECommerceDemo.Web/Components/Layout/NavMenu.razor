@@ -1,0 +1,32 @@
+<div class="flex items-center gap-2">
+    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+        Home
+    </NavLink>
+    <NavLink class="nav-link" href="products">
+        Products
+    </NavLink>
+    <NavLink class="nav-link" href="orders">
+        My Orders
+    </NavLink>
+</div>
+
+<style>
+    .nav-link {
+        color: var(--text-secondary);
+        padding: 0.5rem 1rem;
+        border-radius: 9999px; /* Pill shape */
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+    }
+    
+    .nav-link.active {
+        background: rgba(99, 102, 241, 0.15);
+        color: #818cf8; /* Light Indigo */
+    }
+</style>

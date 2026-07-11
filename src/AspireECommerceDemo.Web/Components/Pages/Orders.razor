@@ -1,0 +1,141 @@
+@page "/orders"
+@rendermode InteractiveServer
+@inject OrderApiClient OrderApi
+
+<PageTitle>My Orders | AspireStore</PageTitle>
+
+<div class="container py-8 animate-fade-in">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="brand-font text-3xl m-0">Order History</h2>
+        <button class="btn btn-secondary flex items-center gap-2" @onclick="LoadOrdersAsync">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg>
+            Refresh
+        </button>
+    </div>
+
+    @if (loading)
+    {
+        <div class="glass-panel text-center py-16">
+            <div style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--border-color); border-top-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 1rem auto;"></div>
+            <p class="text-muted">Loading your orders...</p>
+        </div>
+    }
+    else if (!orders.Any())
+    {
+        <div class="glass-panel text-center py-16">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-4" style="margin: 0 auto;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <h3 class="text-2xl font-bold mb-4">No orders found</h3>
+            <p class="text-muted mb-8">You haven't placed any orders yet.</p>
+            <a href="/products" class="btn btn-primary">Start Shopping</a>
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col gap-6">
+            @foreach (var order in orders)
+            {
+                <div class="glass-panel overflow-hidden animate-fade-in delay-100" style="padding: 0;">
+                    <!-- Order Header -->
+                    <div class="p-6 flex flex-wrap justify-between items-center gap-4" style="background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color);">
+                        <div class="flex gap-8 flex-wrap">
+                            <div>
+                                <div class="text-xs text-muted uppercase tracking-wider font-semibold mb-1">Order Placed</div>
+                                <div class="font-medium text-sm">@order.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-muted uppercase tracking-wider font-semibold mb-1">Total</div>
+                                <div class="font-bold text-gradient text-sm">@order.TotalAmount.ToString("C")</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-muted uppercase tracking-wider font-semibold mb-1">Order ID</div>
+                                <div class="font-mono text-sm">#@order.Id.ToString().Substring(0, 8)</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="badge" style="@GetStatusStyle(order.Status)">
+                                @order.Status
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Items -->
+                    <div class="p-6">
+                        <h4 class="brand-font text-lg mb-4">Order Items</h4>
+                        <div class="flex flex-col gap-3">
+                            @foreach (var item in order.Items)
+                            {
+                                <div class="flex justify-between items-center p-3 rounded-lg" style="background: var(--bg-base); border: 1px solid rgba(255,255,255,0.05);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center font-bold text-xs text-primary" style="background: rgba(99, 102, 241, 0.1);">
+                                            @item.Quantity&times;
+                                        </div>
+                                        <span class="font-medium">@item.ProductName</span>
+                                    </div>
+                                    <div class="font-medium text-muted">
+                                        @((item.Quantity * item.UnitPrice).ToString("C"))
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+@code {
+    private List<OrderDto> orders = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        loading = true;
+        StateHasChanged();
+        
+        try
+        {
+            orders = await OrderApi.GetOrdersAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading orders: {ex.Message}");
+            orders = new();
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetStatusStyle(string status)
+    {
+        return status switch
+        {
+            "Pending" => "background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3);", // Warning
+            "Paid" => "background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3);", // Success
+            "PaymentFailed" => "background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);", // Error
+            "Cancelled" => "background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);", // Error
+            _ => "background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);" // Primary
+        };
+    }
+}

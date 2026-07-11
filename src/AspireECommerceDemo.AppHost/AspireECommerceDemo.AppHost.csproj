@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.4.6" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.SqlServer" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AspireECommerceDemo.CatalogService\AspireECommerceDemo.CatalogService.csproj" />
+    <ProjectReference Include="..\AspireECommerceDemo.OrderService\AspireECommerceDemo.OrderService.csproj" />
+    <ProjectReference Include="..\AspireECommerceDemo.PaymentService\AspireECommerceDemo.PaymentService.csproj" />
+    <ProjectReference Include="..\AspireECommerceDemo.NotificationService\AspireECommerceDemo.NotificationService.csproj" />
+    <ProjectReference Include="..\AspireECommerceDemo.ApiGateway\AspireECommerceDemo.ApiGateway.csproj" />
+    <ProjectReference Include="..\AspireECommerceDemo.Web\AspireECommerceDemo.Web.csproj" />
+  </ItemGroup>
+
+</Project>

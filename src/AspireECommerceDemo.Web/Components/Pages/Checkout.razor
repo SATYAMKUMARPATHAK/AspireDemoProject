@@ -1,0 +1,190 @@
+@page "/checkout"
+@rendermode InteractiveServer
+@inject CartService Cart
+@inject OrderApiClient OrderApi
+@inject NavigationManager Nav
+
+<PageTitle>Checkout | AspireStore</PageTitle>
+
+<div class="container py-8 animate-fade-in">
+    <h2 class="brand-font text-3xl mb-8">Checkout</h2>
+
+    @if (Cart.Count == 0 && !orderPlaced)
+    {
+        <div class="glass-panel text-center py-16">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-4" style="margin: 0 auto;">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <h3 class="text-2xl font-bold mb-4">Your cart is empty</h3>
+            <a href="/products" class="btn btn-primary mt-3">Browse Products</a>
+        </div>
+    }
+    else if (orderPlaced)
+    {
+        <div class="glass-panel text-center py-16 animate-fade-in" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-emerald-500/20 text-emerald-500 mb-6" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <h2 class="brand-font text-4xl text-success mb-4">Order Placed Successfully!</h2>
+            <p class="text-lg text-muted mb-8 max-w-2xl mx-auto">
+                Thank you for your purchase, <strong class="text-primary">@model.CustomerName</strong>.
+                An email confirmation is on its way to <strong class="text-primary">@model.CustomerEmail</strong>.
+            </p>
+            <a href="/orders" class="btn btn-primary" style="padding: 1rem 2rem;">View My Orders</a>
+        </div>
+    }
+    else
+    {
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="md:col-span-2">
+                <div class="glass-panel p-6 sm:p-8">
+                    <h3 class="brand-font text-2xl mb-6 pb-4" style="border-bottom: 1px solid var(--border-color);">Shipping Information</h3>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="p-4 mb-6 rounded-lg flex items-start gap-3" style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--error);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <div>@errorMessage</div>
+                        </div>
+                    }
+
+                    <EditForm Model="@model" OnValidSubmit="PlaceOrder">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="mb-6 text-error text-sm font-medium">
+                            <ValidationSummary />
+                        </div>
+
+                        <div class="form-group mb-6">
+                            <label class="form-label">Full Name</label>
+                            <InputText @bind-Value="model.CustomerName" class="form-control" placeholder="e.g. Jane Doe" />
+                        </div>
+                        
+                        <div class="form-group mb-6">
+                            <label class="form-label">Email Address</label>
+                            <InputText @bind-Value="model.CustomerEmail" class="form-control" type="email" placeholder="e.g. jane@example.com" />
+                        </div>
+                        
+                        <div class="form-group mb-8">
+                            <label class="form-label">Shipping Address</label>
+                            <InputTextArea @bind-Value="model.ShippingAddress" class="form-control" rows="3" placeholder="Full street address, city, state, zip" />
+                        </div>
+                        
+                        <h3 class="brand-font text-2xl mb-6 pb-4" style="border-bottom: 1px solid var(--border-color);">Payment Information</h3>
+                        <div class="p-6 rounded-lg text-center mb-8 flex flex-col items-center justify-center gap-2" style="background: rgba(99, 102, 241, 0.05); border: 1px dashed rgba(99, 102, 241, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            <span class="text-muted text-sm">Demo Mode: Payment will be processed asynchronously via RabbitMQ events. No credit card required.</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" style="padding: 1.25rem; font-size: 1.15rem;" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="flex items-center justify-center gap-2">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; animation: spin 1s linear infinite;"></div>
+                                    Processing Order...
+                                </span>
+                            }
+                            else
+                            {
+                                <span>Place Order &bull; @Cart.Total.ToString("C")</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+            
+            <div>
+                <div class="glass-panel p-6 sticky top-24">
+                    <h3 class="brand-font text-xl mb-4 pb-4" style="border-bottom: 1px solid var(--border-color);">Order Summary</h3>
+                    
+                    <div class="max-h-[300px] overflow-y-auto mb-6 pr-2">
+                        @foreach (var item in Cart.Items)
+                        {
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                                    <div class="w-12 h-12 bg-zinc-900 rounded flex-shrink-0 flex items-center justify-center p-1" style="background: var(--bg-base);">
+                                        <img src="@item.ImageUrl" class="max-w-full max-h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/40x40/e4e4e7/18181b?text=IMG';" />
+                                    </div>
+                                    <div class="text-sm">
+                                        <div class="font-medium truncate" style="max-width: 150px;">@item.ProductName</div>
+                                        <div class="text-muted text-xs">Qty: @item.Quantity</div>
+                                    </div>
+                                </div>
+                                <div class="font-bold text-sm">
+                                    @((item.UnitPrice * item.Quantity).ToString("C"))
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="flex justify-between pt-4 mb-2" style="border-top: 1px solid var(--border-color);">
+                        <span class="font-medium text-muted">Subtotal</span>
+                        <span class="font-bold">@Cart.Total.ToString("C")</span>
+                    </div>
+                    <div class="flex justify-between mb-6">
+                        <span class="font-medium text-muted">Shipping</span>
+                        <span class="text-success font-bold">Free</span>
+                    </div>
+                    <div class="flex justify-between pt-4" style="border-top: 1px dashed var(--border-color);">
+                        <span class="text-xl font-bold">Total</span>
+                        <span class="text-2xl font-bold text-gradient">@Cart.Total.ToString("C")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+@code {
+    private CheckoutModel model = new();
+    private bool isSubmitting = false;
+    private bool orderPlaced = false;
+    private string errorMessage = "";
+
+    public class CheckoutModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string CustomerName { get; set; } = "Jane Doe";
+        
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string CustomerEmail { get; set; } = "jane.doe@example.com";
+        
+        [System.ComponentModel.DataAnnotations.Required]
+        public string ShippingAddress { get; set; } = "123 Aspire Way\nCloud City, CC 12345";
+    }
+
+    private async Task PlaceOrder()
+    {
+        isSubmitting = true;
+        errorMessage = "";
+        
+        try
+        {
+            var items = Cart.Items.Select(i => new OrderItemRequest(i.ProductId, i.ProductName, i.Quantity, i.UnitPrice)).ToList();
+            var request = new CreateOrderRequest(model.CustomerName, model.CustomerEmail, model.ShippingAddress, items);
+            
+            await OrderApi.CreateOrderAsync(request);
+            
+            Cart.Clear();
+            orderPlaced = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to place order. Please try again. ({ex.Message})";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

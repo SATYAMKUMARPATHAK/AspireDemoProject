@@ -1,0 +1,149 @@
+@page "/product/{Id:guid}"
+@rendermode InteractiveServer
+@inject CatalogApiClient CatalogApi
+@inject CartService Cart
+
+<PageTitle>@(product?.Name ?? "Loading...") | AspireStore</PageTitle>
+
+<div class="container py-8">
+    @if (loading)
+    {
+        <div class="glass-panel text-center py-16 animate-fade-in">
+            <div style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--border-color); border-top-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 1rem auto;"></div>
+            <p class="text-muted">Loading product details...</p>
+        </div>
+    }
+    else if (product == null)
+    {
+        <div class="glass-panel text-center py-16 animate-fade-in">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-4" style="margin: 0 auto;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3 class="text-2xl font-bold mb-4">Product not found</h3>
+            <a href="/products" class="btn btn-secondary">Back to Products</a>
+        </div>
+    }
+    else
+    {
+        <div class="animate-fade-in">
+            <a href="/products" class="text-muted mb-6 inline-block hover:text-white" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Products
+            </a>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Left: Image -->
+                <div class="glass-panel p-4 flex items-center justify-center" style="min-height: 400px;">
+                    <img src="@product.ImageUrl" alt="@product.Name" style="max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 0.5rem;" onerror="this.onerror=null; this.src='https://placehold.co/500x500/e4e4e7/18181b?text=Product';" />
+                </div>
+                
+                <!-- Right: Details -->
+                <div class="flex flex-col">
+                    <div>
+                        <div class="mb-4">
+                            <span class="badge badge-primary">@product.CategoryName</span>
+                        </div>
+                        <h2 class="brand-font text-4xl mb-4">@product.Name</h2>
+                        
+                        <p class="text-lg text-muted mb-8" style="line-height: 1.8;">
+                            @product.Description
+                        </p>
+                        
+                        <div class="mb-8 p-6 glass-panel" style="background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2);">
+                            <div class="text-4xl font-bold text-gradient mb-2">@product.Price.ToString("C")</div>
+                            
+                            @if (product.StockQuantity > 0)
+                            {
+                                <div class="flex items-center gap-2 text-success font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    In Stock (@product.StockQuantity available)
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="flex items-center gap-2 text-error font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                    Out of Stock
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="mt-auto glass-panel p-6">
+                        <div class="form-group mb-4">
+                            <label class="form-label">Quantity</label>
+                            <div class="flex items-center gap-4">
+                                <input type="number" class="form-control" style="width: 100px; text-align: center; font-size: 1.1rem; font-weight: bold;" min="1" max="@product.StockQuantity" @bind="quantity" disabled="@(product.StockQuantity <= 0)" />
+                                
+                                <button class="btn btn-primary flex-1" style="padding: 1rem;" @onclick="AddToCart" disabled="@(product.StockQuantity <= 0)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                        
+                        @if (showAddedSuccess)
+                        {
+                            <div class="animate-fade-in text-success text-center font-medium mt-4">
+                                Added to cart successfully!
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private ProductDto? product;
+    private bool loading = true;
+    private int quantity = 1;
+    private bool showAddedSuccess = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            product = await CatalogApi.GetProductAsync(Id);
+        }
+        catch (Exception)
+        {
+            product = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task AddToCart()
+    {
+        if (product != null)
+        {
+            for (int i = 0; i < quantity; i++)
+            {
+                Cart.AddItem(product.Id, product.Name, product.Price, product.ImageUrl);
+            }
+            
+            showAddedSuccess = true;
+            StateHasChanged();
+            
+            await Task.Delay(2000);
+            showAddedSuccess = false;
+            StateHasChanged();
+        }
+    }
+}

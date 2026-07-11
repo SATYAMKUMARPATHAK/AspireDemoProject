@@ -1,0 +1,112 @@
+@page "/"
+@inject CatalogApiClient Catalog
+@inject CartService Cart
+@using AspireECommerceDemo.Web.Services
+
+<PageTitle>Home | AspireStore</PageTitle>
+
+<div class="animate-fade-in">
+    <!-- Hero Section -->
+    <section class="py-16 text-center" style="position: relative; overflow: hidden; margin-top: -2rem;">
+        <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%; background: radial-gradient(circle at top, rgba(99, 102, 241, 0.15), transparent 70%); z-index: -1;"></div>
+        
+        <h1 class="brand-font" style="font-size: 4rem; margin-bottom: 1rem;">
+            Discover <span class="text-gradient">Extraordinary</span> Products
+        </h1>
+        <p class="text-xl text-muted mb-8" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+            Experience the future of e-commerce. Built on the blazing-fast .NET Aspire stack, delivering unparalleled performance and seamless design.
+        </p>
+        
+        <div class="flex justify-center gap-4">
+            <a href="/products" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                Shop Now
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+            <a href="/products" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                Browse Categories
+            </a>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="container py-8 mt-8">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="brand-font m-0">Featured Picks</h2>
+            <a href="/products" class="text-muted" style="font-weight: 500;">View all &rarr;</a>
+        </div>
+
+        @if (featuredProducts == null)
+        {
+            <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="card" style="min-height: 350px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-muted">Loading...</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @foreach (var product in featuredProducts)
+                {
+                    <div class="card animate-fade-in">
+                        <a href="/product/@product.Id">
+                            <div class="card-img-container">
+                                @if (string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <div class="card-img flex items-center justify-center text-muted" style="background: rgba(255,255,255,0.02);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <polyline points="21 15 16 10 5 21"></polyline>
+                                        </svg>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <img src="@product.ImageUrl" alt="@product.Name" class="card-img" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e4e4e7/18181b?text=Product';" />
+                                }
+                            </div>
+                        </a>
+                        
+                        <div class="flex justify-between items-start mt-4 mb-2">
+                            <a href="/product/@product.Id">
+                                <h3 class="font-bold text-lg m-0" style="color: var(--text-primary);">@product.Name</h3>
+                            </a>
+                            <span class="badge badge-primary">@product.Price.ToString("C")</span>
+                        </div>
+                        
+                        <p class="text-sm text-muted mb-4" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            @product.Description
+                        </p>
+                        
+                        <button class="btn btn-primary btn-block" @onclick="() => AddToCart(product)">
+                            Add to Cart
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private List<ProductDto>? featuredProducts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // For demo, just get first 4 products
+        var allProducts = await Catalog.GetProductsAsync();
+        featuredProducts = allProducts?.Take(4).ToList() ?? new List<ProductDto>();
+    }
+
+    private void AddToCart(ProductDto product)
+    {
+        Cart.AddItem(product.Id, product.Name, product.Price, product.ImageUrl);
+    }
+}
