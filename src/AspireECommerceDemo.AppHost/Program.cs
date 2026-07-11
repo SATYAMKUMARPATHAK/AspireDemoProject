@@ -16,7 +16,6 @@ var redis = builder.AddRedis("redis");
 var rabbitmq = builder.AddRabbitMQ("messaging")
     .WithManagementPlugin();
 
-
 // ──────────────────────────────────────────────
 // Microservices
 // ──────────────────────────────────────────────
