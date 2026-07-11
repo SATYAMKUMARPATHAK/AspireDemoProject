@@ -62,15 +62,17 @@
                         </div>
                     </a>
                     
-                    <div class="flex-1">
-                        <a href="/product/@p.Id"><h4 class="font-bold text-lg mb-1">@p.Name</h4></a>
-                        <p class="text-sm text-muted mb-3">@p.CategoryName</p>
-                        <p class="text-xl font-bold text-gradient mb-4">@p.Price.ToString("C")</p>
-                    </div>
-                    
-                    <div class="flex gap-2 mt-auto">
-                        <a href="/product/@p.Id" class="btn btn-secondary flex-1">Details</a>
-                        <button class="btn btn-primary flex-1" @onclick="() => AddToCart(p)">Add to Cart</button>
+                    <div class="card-body">
+                        <div class="flex-1">
+                            <a href="/product/@p.Id"><h4 class="font-bold text-lg mb-1">@p.Name</h4></a>
+                            <p class="text-sm text-muted mb-3">@p.CategoryName</p>
+                            <p class="text-xl font-bold text-gradient mb-4">@p.Price.ToString("C")</p>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-auto">
+                            <a href="/product/@p.Id" class="btn btn-secondary flex-1">Details</a>
+                            <button class="btn btn-primary flex-1" @onclick="() => AddToCart(p)">Add to Cart</button>
+                        </div>
                     </div>
                 </div>
             }
