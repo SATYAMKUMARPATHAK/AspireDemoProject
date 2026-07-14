@@ -13,6 +13,8 @@ var notificationDb = sql.AddDatabase("notificationdb");
 
 var redis = builder.AddRedis("redis");
 
+// Enable RabbitMQ Management UI (port 15672) for local development and debugging.
+// Allows inspection of queues, exchanges, consumers, and messages in real time.
 var rabbitmq = builder.AddRabbitMQ("messaging")
     .WithManagementPlugin();
 

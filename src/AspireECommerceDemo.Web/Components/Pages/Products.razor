@@ -71,7 +71,9 @@
                         
                         <div class="flex gap-2 mt-auto">
                             <a href="/product/@p.Id" class="btn btn-secondary flex-1">Details</a>
-                            <button class="btn btn-primary flex-1" @onclick="() => AddToCart(p)">Add to Cart</button>
+                            <button class="btn @(addedStates.GetValueOrDefault(p.Id) ? "btn-success" : "btn-primary") flex-1" @onclick="() => AddToCart(p)" disabled="@(addedStates.GetValueOrDefault(p.Id))">
+                                @(addedStates.GetValueOrDefault(p.Id) ? "Added!" : "Add to Cart")
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -93,6 +95,7 @@
     private bool loading = true;
     private string searchQuery = "";
     private Guid? selectedCategory = null;
+    private Dictionary<Guid, bool> addedStates = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -164,8 +167,14 @@
         await LoadProductsAsync();
     }
 
-    private void AddToCart(ProductDto p)
+    private async Task AddToCart(ProductDto p)
     {
         Cart.AddItem(p.Id, p.Name, p.Price, p.ImageUrl);
+        addedStates[p.Id] = true;
+        StateHasChanged();
+        
+        await Task.Delay(1500);
+        addedStates[p.Id] = false;
+        StateHasChanged();
     }
 }

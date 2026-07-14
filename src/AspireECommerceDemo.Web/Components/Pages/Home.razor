@@ -1,4 +1,5 @@
 @page "/"
+@rendermode InteractiveServer
 @inject CatalogApiClient Catalog
 @inject CartService Cart
 @using AspireECommerceDemo.Web.Services
@@ -86,8 +87,8 @@
                                 @product.Description
                             </p>
                             
-                            <button class="btn btn-primary btn-block mt-auto" @onclick="() => AddToCart(product)">
-                                Add to Cart
+                            <button class="btn @(addedStates.GetValueOrDefault(product.Id) ? "btn-success" : "btn-primary") btn-block mt-auto" @onclick="() => AddToCart(product)" disabled="@(addedStates.GetValueOrDefault(product.Id))">
+                                @(addedStates.GetValueOrDefault(product.Id) ? "Added!" : "Add to Cart")
                             </button>
                         </div>
                     </div>
@@ -99,6 +100,7 @@
 
 @code {
     private List<ProductDto>? featuredProducts;
+    private Dictionary<Guid, bool> addedStates = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,8 +109,14 @@
         featuredProducts = allProducts?.Take(4).ToList() ?? new List<ProductDto>();
     }
 
-    private void AddToCart(ProductDto product)
+    private async Task AddToCart(ProductDto product)
     {
         Cart.AddItem(product.Id, product.Name, product.Price, product.ImageUrl);
+        addedStates[product.Id] = true;
+        StateHasChanged();
+        
+        await Task.Delay(1500);
+        addedStates[product.Id] = false;
+        StateHasChanged();
     }
 }
