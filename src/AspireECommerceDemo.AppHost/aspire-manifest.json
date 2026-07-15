@@ -1,0 +1,330 @@
+{
+  "resources": {
+    "sql": {
+      "type": "container.v0",
+      "connectionString": "Server={sql.bindings.tcp.host},{sql.bindings.tcp.port};User ID=sa;Password={sql-password.value};TrustServerCertificate=true",
+      "image": "mcr.microsoft.com/mssql/server:2022-latest",
+      "env": {
+        "ACCEPT_EULA": "Y",
+        "MSSQL_SA_PASSWORD": "{sql-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 1433
+        }
+      }
+    },
+    "catalogdb": {
+      "type": "value.v0",
+      "connectionString": "{sql.connectionString};Initial Catalog=catalogdb"
+    },
+    "orderdb": {
+      "type": "value.v0",
+      "connectionString": "{sql.connectionString};Initial Catalog=orderdb"
+    },
+    "paymentdb": {
+      "type": "value.v0",
+      "connectionString": "{sql.connectionString};Initial Catalog=paymentdb"
+    },
+    "notificationdb": {
+      "type": "value.v0",
+      "connectionString": "{sql.connectionString};Initial Catalog=notificationdb"
+    },
+    "redis": {
+      "type": "container.v0",
+      "connectionString": "{redis.bindings.tcp.host}:{redis.bindings.tcp.port},password={redis-password.value}{cond-redis-bindings-tcp-tlsenabled-d148d83a.connectionString}",
+      "image": "docker.io/library/redis:8.6",
+      "entrypoint": "/bin/sh",
+      "args": [
+        "-c",
+        "redis-server --requirepass $REDIS_PASSWORD"
+      ],
+      "env": {
+        "REDIS_PASSWORD": "{redis-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "redis",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 6379
+        }
+      }
+    },
+    "messaging": {
+      "type": "container.v0",
+      "connectionString": "amqp://guest:{messaging-password-uri-encoded.value}@{messaging.bindings.tcp.host}:{messaging.bindings.tcp.port}",
+      "image": "docker.io/library/rabbitmq:4.3-management",
+      "env": {
+        "RABBITMQ_DEFAULT_USER": "guest",
+        "RABBITMQ_DEFAULT_PASS": "{messaging-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5672
+        },
+        "management": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 15672
+        }
+      }
+    },
+    "catalogservice": {
+      "type": "project.v0",
+      "path": "../AspireECommerceDemo.CatalogService/AspireECommerceDemo.CatalogService.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{catalogservice.bindings.http.targetPort}",
+        "ConnectionStrings__catalogdb": "{catalogdb.connectionString}",
+        "CATALOGDB_HOST": "{sql.bindings.tcp.host}",
+        "CATALOGDB_PORT": "{sql.bindings.tcp.port}",
+        "CATALOGDB_USERNAME": "sa",
+        "CATALOGDB_PASSWORD": "{sql-password.value}",
+        "CATALOGDB_URI": "mssql://sa:{sql-password.value}@{sql.bindings.tcp.host}:{sql.bindings.tcp.port}/catalogdb",
+        "CATALOGDB_JDBCCONNECTIONSTRING": "jdbc:sqlserver://{sql.bindings.tcp.host}:{sql.bindings.tcp.port};databaseName=catalogdb;trustServerCertificate=true",
+        "CATALOGDB_DATABASENAME": "catalogdb",
+        "ConnectionStrings__redis": "{redis.connectionString}",
+        "REDIS_HOST": "{redis.bindings.tcp.host}",
+        "REDIS_PORT": "{redis.bindings.tcp.port}",
+        "REDIS_PASSWORD": "{redis-password.value}",
+        "REDIS_URI": "{redis.bindings.tcp.scheme}://:{redis-password-uri-encoded.value}@{redis.bindings.tcp.host}:{redis.bindings.tcp.port}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "orderservice": {
+      "type": "project.v0",
+      "path": "../AspireECommerceDemo.OrderService/AspireECommerceDemo.OrderService.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{orderservice.bindings.http.targetPort}",
+        "ConnectionStrings__orderdb": "{orderdb.connectionString}",
+        "ORDERDB_HOST": "{sql.bindings.tcp.host}",
+        "ORDERDB_PORT": "{sql.bindings.tcp.port}",
+        "ORDERDB_USERNAME": "sa",
+        "ORDERDB_PASSWORD": "{sql-password.value}",
+        "ORDERDB_URI": "mssql://sa:{sql-password.value}@{sql.bindings.tcp.host}:{sql.bindings.tcp.port}/orderdb",
+        "ORDERDB_JDBCCONNECTIONSTRING": "jdbc:sqlserver://{sql.bindings.tcp.host}:{sql.bindings.tcp.port};databaseName=orderdb;trustServerCertificate=true",
+        "ORDERDB_DATABASENAME": "orderdb",
+        "ConnectionStrings__messaging": "{messaging.connectionString}",
+        "MESSAGING_HOST": "{messaging.bindings.tcp.host}",
+        "MESSAGING_PORT": "{messaging.bindings.tcp.port}",
+        "MESSAGING_USERNAME": "guest",
+        "MESSAGING_PASSWORD": "{messaging-password.value}",
+        "MESSAGING_URI": "amqp://guest:{messaging-password-uri-encoded.value}@{messaging.bindings.tcp.host}:{messaging.bindings.tcp.port}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "paymentservice": {
+      "type": "project.v0",
+      "path": "../AspireECommerceDemo.PaymentService/AspireECommerceDemo.PaymentService.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{paymentservice.bindings.http.targetPort}",
+        "ConnectionStrings__paymentdb": "{paymentdb.connectionString}",
+        "PAYMENTDB_HOST": "{sql.bindings.tcp.host}",
+        "PAYMENTDB_PORT": "{sql.bindings.tcp.port}",
+        "PAYMENTDB_USERNAME": "sa",
+        "PAYMENTDB_PASSWORD": "{sql-password.value}",
+        "PAYMENTDB_URI": "mssql://sa:{sql-password.value}@{sql.bindings.tcp.host}:{sql.bindings.tcp.port}/paymentdb",
+        "PAYMENTDB_JDBCCONNECTIONSTRING": "jdbc:sqlserver://{sql.bindings.tcp.host}:{sql.bindings.tcp.port};databaseName=paymentdb;trustServerCertificate=true",
+        "PAYMENTDB_DATABASENAME": "paymentdb",
+        "ConnectionStrings__messaging": "{messaging.connectionString}",
+        "MESSAGING_HOST": "{messaging.bindings.tcp.host}",
+        "MESSAGING_PORT": "{messaging.bindings.tcp.port}",
+        "MESSAGING_USERNAME": "guest",
+        "MESSAGING_PASSWORD": "{messaging-password.value}",
+        "MESSAGING_URI": "amqp://guest:{messaging-password-uri-encoded.value}@{messaging.bindings.tcp.host}:{messaging.bindings.tcp.port}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "notificationservice": {
+      "type": "project.v0",
+      "path": "../AspireECommerceDemo.NotificationService/AspireECommerceDemo.NotificationService.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{notificationservice.bindings.http.targetPort}",
+        "ConnectionStrings__notificationdb": "{notificationdb.connectionString}",
+        "NOTIFICATIONDB_HOST": "{sql.bindings.tcp.host}",
+        "NOTIFICATIONDB_PORT": "{sql.bindings.tcp.port}",
+        "NOTIFICATIONDB_USERNAME": "sa",
+        "NOTIFICATIONDB_PASSWORD": "{sql-password.value}",
+        "NOTIFICATIONDB_URI": "mssql://sa:{sql-password.value}@{sql.bindings.tcp.host}:{sql.bindings.tcp.port}/notificationdb",
+        "NOTIFICATIONDB_JDBCCONNECTIONSTRING": "jdbc:sqlserver://{sql.bindings.tcp.host}:{sql.bindings.tcp.port};databaseName=notificationdb;trustServerCertificate=true",
+        "NOTIFICATIONDB_DATABASENAME": "notificationdb",
+        "ConnectionStrings__messaging": "{messaging.connectionString}",
+        "MESSAGING_HOST": "{messaging.bindings.tcp.host}",
+        "MESSAGING_PORT": "{messaging.bindings.tcp.port}",
+        "MESSAGING_USERNAME": "guest",
+        "MESSAGING_PASSWORD": "{messaging-password.value}",
+        "MESSAGING_URI": "amqp://guest:{messaging-password-uri-encoded.value}@{messaging.bindings.tcp.host}:{messaging.bindings.tcp.port}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "apigateway": {
+      "type": "project.v0",
+      "path": "../AspireECommerceDemo.ApiGateway/AspireECommerceDemo.ApiGateway.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{apigateway.bindings.http.targetPort}",
+        "CATALOGSERVICE_HTTP": "{catalogservice.bindings.http.url}",
+        "services__catalogservice__http__0": "{catalogservice.bindings.http.url}",
+        "ORDERSERVICE_HTTP": "{orderservice.bindings.http.url}",
+        "services__orderservice__http__0": "{orderservice.bindings.http.url}",
+        "PAYMENTSERVICE_HTTP": "{paymentservice.bindings.http.url}",
+        "services__paymentservice__http__0": "{paymentservice.bindings.http.url}",
+        "NOTIFICATIONSERVICE_HTTP": "{notificationservice.bindings.http.url}",
+        "services__notificationservice__http__0": "{notificationservice.bindings.http.url}",
+        "ConnectionStrings__redis": "{redis.connectionString}",
+        "REDIS_HOST": "{redis.bindings.tcp.host}",
+        "REDIS_PORT": "{redis.bindings.tcp.port}",
+        "REDIS_PASSWORD": "{redis-password.value}",
+        "REDIS_URI": "{redis.bindings.tcp.scheme}://:{redis-password-uri-encoded.value}@{redis.bindings.tcp.host}:{redis.bindings.tcp.port}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "webfrontend": {
+      "type": "project.v0",
+      "path": "../AspireECommerceDemo.Web/AspireECommerceDemo.Web.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{webfrontend.bindings.http.targetPort}",
+        "APIGATEWAY_HTTP": "{apigateway.bindings.http.url}",
+        "services__apigateway__http__0": "{apigateway.bindings.http.url}",
+        "APIGATEWAY_HTTPS": "{apigateway.bindings.https.url}",
+        "services__apigateway__https__0": "{apigateway.bindings.https.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "external": true
+        }
+      }
+    },
+    "sql-password": {
+      "type": "parameter.v0",
+      "value": "{sql-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22,
+              "minLower": 1,
+              "minUpper": 1,
+              "minNumeric": 1
+            }
+          }
+        }
+      }
+    },
+    "sql-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{sql-password.value}",
+      "filter": "uri"
+    },
+    "redis-password": {
+      "type": "parameter.v0",
+      "value": "{redis-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22,
+              "special": false
+            }
+          }
+        }
+      }
+    },
+    "redis-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{redis-password.value}",
+      "filter": "uri"
+    },
+    "messaging-password": {
+      "type": "parameter.v0",
+      "value": "{messaging-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22,
+              "special": false
+            }
+          }
+        }
+      }
+    },
+    "messaging-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{messaging-password.value}",
+      "filter": "uri"
+    },
+    "cond-redis-bindings-tcp-tlsenabled-d148d83a": {
+      "type": "value.v0",
+      "connectionString": ""
+    }
+  }
+}
